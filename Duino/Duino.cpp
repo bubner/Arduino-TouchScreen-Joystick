@@ -1,63 +1,21 @@
-#pragma once
 #include <Adafruit_TFTLCD.h>
 #include <TouchScreen.h>
+#include "Duino.h"
 #include "config.h"
-#include "geometry.h"
-#include "util.h"
-
-// default bounds for draw_function
-#define LX -100
-#define UX 100
-#define LY -100
-#define UY 100
-#define DT 0.01
-
-enum PointMode
-{
-    NO_INPUT,
-    TOUCH_SCREEN,
-    JOYSTICK_ABSOLUTE,
-    JOYSTICK_ACCUMULATING
-};
-
-class Arduino
-{
-public:
-    Adafruit_TFTLCD screen;
-    TouchScreen touch;
-    /**
-     * type of point data returned from getPoint()
-     */
-    PointMode pointMode;
-    /**
-     * current point as per the current PointMode
-     */
-    Point getPoint();
-    /**
-     * draw an unary function e.g. `arduino->draw_function([](double x) -> double { return x; }, WHITE);` will draw a white y=x function with default bounds
-     */
-    template <typename T>
-    void draw_function(T func, uint16_t color, int lower_x = LX, int upper_x = UX, int lower_y = LY, int upper_y = UY, float dt = DT);
-    Arduino(PointMode pointMode);
-    /**
-     * shorthand for `arduino->screen.fillScreen(rgb(0, 0, 0));`
-     */
-    void reset_screen();
-};
 
 /**
- * assumes pin config from config.h, joystick facing cables forward, screen rotated landscape with long side on right.
+ * start arduino using the selected point recognition mode using config.h constants
  */
 Arduino::Arduino(PointMode pointMode)
     : screen(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET),
-      touch(XP, YP, XM, YM, RX)
+      touch(TS_XP, TS_YP, TS_XM, TS_YM, TS_RX)
 {
     this->pointMode = pointMode;
-    Serial.begin(115200); // general setup
+    Serial.begin(SERIAL_BAUD);
     pinMode(JS_B, INPUT);
     screen.reset();
-    screen.begin(0x7575); // id for xc4630
-    screen.setRotation(1);
+    screen.begin(LCD_BOARD_ID);
+    screen.setRotation(LCD_BOARD_ROTATION);
 }
 
 Point Arduino::getPoint()
@@ -73,8 +31,8 @@ Point Arduino::getPoint()
         int16_t real_x = p.x;
         p.x = p.y;
         p.y = real_x;
-        pinMode(XM, OUTPUT);
-        pinMode(YP, OUTPUT);
+        pinMode(TS_XM, OUTPUT);
+        pinMode(TS_YP, OUTPUT);
         p.x = map(p.x, TS_MINX, TS_MAXX, 0, screen.width()); // rescale to tft screen
         p.y = map(p.y, TS_MINY, TS_MAXY, 0, screen.height());
         return Point(p.x, p.y, p.z, p.z <= 0); // invalid if no pressure
@@ -139,4 +97,74 @@ void Arduino::draw_function(T func, uint16_t color, int lower_x = LX, int upper_
 void Arduino::reset_screen()
 {
     screen.fillScreen(0);
+}
+
+int deadband(int value, int deadband, int maxMag)
+{
+    if (abs(value) > deadband)
+    {
+        if (maxMag / deadband > 1.0e12)
+        {
+            return value > 0 ? value - deadband : value + deadband;
+        }
+        if (value > 0)
+        {
+            return maxMag * (value - deadband) / (maxMag - deadband);
+        }
+        else
+        {
+            return maxMag * (value + deadband) / (maxMag - deadband);
+        }
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+bool near(int a, int b, int tol)
+{
+    return abs(a - b) < tol;
+}
+
+uint16_t rgb(uint16_t r, uint16_t g, uint16_t b)
+{
+    return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3);
+}
+
+double map_double(double x, double in_min, double in_max, double out_min, double out_max)
+{
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+Point::Point(int x, int y, int z, bool invalid)
+{
+    this->x = x;
+    this->y = y;
+    this->z = z;
+    this->invalid = invalid;
+}
+
+bool Point::operator==(const Point &other)
+{
+    return near(x, other.x, POINT_TOLERANCE_PX) && near(y, other.y, POINT_TOLERANCE_PX) && z == other.z && invalid == other.invalid;
+}
+
+void Point::operator+=(const Point &other)
+{
+    this->x += other.x;
+    this->y += other.y;
+    this->z = other.z; // z axis does not need to be added
+}
+
+void Point::print()
+{
+    char buffer[16];
+    sprintf(buffer, "X = %03d", this->x);
+    Serial.print(buffer);
+    sprintf(buffer, "\tY = %03d", this->y);
+    Serial.print(buffer);
+    sprintf(buffer, "\tZ = %03d", this->z);
+    Serial.print(buffer);
+    Serial.println(this->invalid ? " (invalid)" : "");
 }

@@ -1,8 +1,5 @@
 #include <Adafruit_GFX.h>
-#include "util.h"
-#include "config.h"
-#include "geometry.h"
-#include "api.h"
+#include <Duino.h>
 
 Arduino *arduino;
 
