@@ -1,9 +1,4 @@
-/*
-    Hardware and pin configuration for Duino functions.
-*/
-#pragma once
-#ifndef CONFIG_H
-#define CONFIG_H
+/* configuration options and hardware mapping for Duino */
 
 // common colours
 #define BLACK 0x0000
@@ -55,11 +50,9 @@
 
 #define POINT_EQUALITY_TOLERANCE_PX 2 // point x and y tolerance for ==
 
-// default bounds for Duino draw_function
-#define DF_LX -100 // lower x
-#define DF_UX 100  // upper x
-#define DF_LY -100 // lower y
-#define DF_UY 100  // upper y
-#define DF_DT 0.01 // delta step
-
-#endif
+// default bounds for Duino draw_function, standard doubles for dynamic modification.
+static double DF_LX = -100;  // lower x
+static double DF_UX = 100;   // upper x
+static double DF_LY = -100;  // lower y
+static double DF_UY = 100;   // upper y
+static double DF_DT = 0.01f; // delta step

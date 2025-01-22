@@ -4,6 +4,7 @@
 
 #include <Adafruit_TFTLCD.h>
 #include <TouchScreen.h>
+#include "config.h"
 
 /**
  * common 2d geometry
@@ -53,8 +54,26 @@ public:
     /**
      * draw an unary function e.g. `arduino->draw_function([](double x) -> double { return x; }, WHITE);` will draw a white y=x function with default bounds
      */
-    template <typename T>
-    void draw_function(T func, uint16_t color, int lower_x = LX, int upper_x = UX, int lower_y = LY, int upper_y = UY, float dt = DT);
+    template <typename T> // must add definition here due to use of generics
+    void draw_function(T func, uint16_t color, int lower_x = DF_LX, int upper_x = DF_UX, int lower_y = DF_LY, int upper_y = DF_UY, float delta_step = DF_DT)
+    {
+        // map by double to preserve decimal accuracy of the function, the only narrowing should occur at the screen
+        // the built in function map() only applies to longs which removes all decimals via narrowing
+        double last_x = map_double(lower_x, lower_x, upper_x, 0, screen.width());
+        double last_y = map_double(func(lower_x), lower_y, upper_y, screen.height(), 0);
+        for (double t = lower_x + delta_step; t <= upper_x; t += delta_step)
+        {
+            double x = map_double(t, lower_x, upper_x, 0, screen.width());
+            double y = map_double(func(t), lower_y, upper_y, screen.height(), 0);
+            // don't bother rendering what we can't see or will overflow from narrowing
+            if (x >= 0 && x < screen.width() && y >= 0 && y < screen.height())
+            {
+                screen.drawLine(last_x, last_y, x, y, color);
+            }
+            last_x = x;
+            last_y = y;
+        }
+    }
     Arduino(PointMode pointMode);
     /**
      * shorthand for `arduino->screen.fillScreen(rgb(0, 0, 0));`

@@ -1,7 +1,6 @@
 #include <Adafruit_TFTLCD.h>
 #include <TouchScreen.h>
 #include "Duino.h"
-#include "config.h"
 
 /**
  * start arduino using the selected point recognition mode using config.h constants
@@ -73,27 +72,6 @@ Point Arduino::getPoint()
     }
 }
 
-template <typename T>
-void Arduino::draw_function(T func, uint16_t color, int lower_x = LX, int upper_x = UX, int lower_y = LY, int upper_y = UY, float delta_step = DT)
-{
-    // map by double to preserve decimal accuracy of the function, the only narrowing should occur at the screen
-    // the built in function map() only applies to longs which removes all decimals via narrowing
-    double last_x = map_double(lower_x, lower_x, upper_x, 0, screen.width());
-    double last_y = map_double(func(lower_x), lower_y, upper_y, screen.height(), 0);
-    for (double t = lower_x + delta_step; t <= upper_x; t += delta_step)
-    {
-        double x = map_double(t, lower_x, upper_x, 0, screen.width());
-        double y = map_double(func(t), lower_y, upper_y, screen.height(), 0);
-        // don't bother rendering what we can't see or will overflow from narrowing
-        if (x >= 0 && x < screen.width() && y >= 0 && y < screen.height())
-        {
-            screen.drawLine(last_x, last_y, x, y, color);
-        }
-        last_x = x;
-        last_y = y;
-    }
-}
-
 void Arduino::reset_screen()
 {
     screen.fillScreen(0);
@@ -147,7 +125,7 @@ Point::Point(int x, int y, int z, bool invalid)
 
 bool Point::operator==(const Point &other)
 {
-    return near(x, other.x, POINT_TOLERANCE_PX) && near(y, other.y, POINT_TOLERANCE_PX) && z == other.z && invalid == other.invalid;
+    return near(x, other.x, POINT_EQUALITY_TOLERANCE_PX) && near(y, other.y, POINT_EQUALITY_TOLERANCE_PX) && z == other.z && invalid == other.invalid;
 }
 
 void Point::operator+=(const Point &other)
