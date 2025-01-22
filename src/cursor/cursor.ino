@@ -18,7 +18,7 @@ void setup()
 
 void loop()
 {
-    static Point prev_point(-1, -1);
+    static Point prev_point;
     static uint16_t prev_colours[CURSOR_LENGTH + 4][CURSOR_LENGTH + 4]; // colours under cursor
     static unsigned long prev_update = 0;
 
@@ -29,7 +29,7 @@ void loop()
         if (!p.invalid) // is moving
         {
             // restore the previous cursor position with the stored colours
-            if (prev_point.x != -1 && prev_point.y != -1)
+            if (!prev_point.invalid)
             {
                 for (int i = 0; i < CURSOR_LENGTH + 4; i++)
                 {
