@@ -45,8 +45,6 @@ Point Arduino::getPoint()
     }
     case JOYSTICK_ACCUMULATING:
     {
-        static float acc_x;
-        static float acc_y;
         static long last_call = micros();
         float delta_time = (micros() - last_call) / 1E6;
         int b = digitalRead(JS_B);
@@ -75,6 +73,53 @@ Point Arduino::getPoint()
 void Arduino::reset_screen()
 {
     screen.fillScreen(0);
+}
+
+void Arduino::set_joystick_accumulation_origin(int x, int y)
+{
+    acc_x = x;
+    acc_y = y;
+}
+
+Point::Point(int x, int y, int z, bool invalid)
+{
+    this->x = x;
+    this->y = y;
+    this->z = z;
+    this->invalid = invalid;
+    this->uninitialised = false;
+}
+
+Point::Point()
+{
+    this->invalid = true;
+    this->uninitialised = true;
+}
+
+bool Point::operator==(const Point &other)
+{
+    return near(x, other.x, POINT_EQUALITY_TOLERANCE_PX) && near(y, other.y, POINT_EQUALITY_TOLERANCE_PX) && z == other.z && invalid == other.invalid;
+}
+
+void Point::operator+=(const Point &other)
+{
+    this->x += other.x;
+    this->y += other.y;
+    this->z = other.z; // z axis does not need to be added
+    this->invalid = other.invalid;
+    this->uninitialised = false;
+}
+
+void Point::print()
+{
+    char buffer[16];
+    sprintf(buffer, "X = %03d", this->x);
+    Serial.print(buffer);
+    sprintf(buffer, "\tY = %03d", this->y);
+    Serial.print(buffer);
+    sprintf(buffer, "\tZ = %03d", this->z);
+    Serial.print(buffer);
+    Serial.println(this->invalid ? " (invalid)" : "");
 }
 
 int deadband(int value, int deadband, int maxMag)
@@ -113,36 +158,4 @@ uint16_t rgb(uint16_t r, uint16_t g, uint16_t b)
 double map_double(double x, double in_min, double in_max, double out_min, double out_max)
 {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
-
-Point::Point(int x, int y, int z, bool invalid)
-{
-    this->x = x;
-    this->y = y;
-    this->z = z;
-    this->invalid = invalid;
-}
-
-bool Point::operator==(const Point &other)
-{
-    return near(x, other.x, POINT_EQUALITY_TOLERANCE_PX) && near(y, other.y, POINT_EQUALITY_TOLERANCE_PX) && z == other.z && invalid == other.invalid;
-}
-
-void Point::operator+=(const Point &other)
-{
-    this->x += other.x;
-    this->y += other.y;
-    this->z = other.z; // z axis does not need to be added
-}
-
-void Point::print()
-{
-    char buffer[16];
-    sprintf(buffer, "X = %03d", this->x);
-    Serial.print(buffer);
-    sprintf(buffer, "\tY = %03d", this->y);
-    Serial.print(buffer);
-    sprintf(buffer, "\tZ = %03d", this->z);
-    Serial.print(buffer);
-    Serial.println(this->invalid ? " (invalid)" : "");
 }

@@ -29,7 +29,7 @@ void loop()
         if (!p.invalid) // is moving
         {
             // restore the previous cursor position with the stored colours
-            if (!prev_point.invalid)
+            if (!prev_point.uninitialised)
             {
                 for (int i = 0; i < CURSOR_LENGTH + 4; i++)
                 {
@@ -60,8 +60,8 @@ void loop()
             }
 
             // draw cursor
-            arduino->screen.fillTriangle(p.x, p.y, p.x + CURSOR_ANGLE, p.y + CURSOR_LENGTH, p.x + CURSOR_INSET, p.y + CURSOR_INSET, WHITE);
-            arduino->screen.fillTriangle(p.x, p.y, p.x + CURSOR_LENGTH, p.y + CURSOR_ANGLE, p.x + CURSOR_INSET, p.y + CURSOR_INSET, WHITE);
+            arduino->screen.fillTriangle(p.x, p.y, p.x + CURSOR_ANGLE, p.y + CURSOR_LENGTH, p.x + CURSOR_INSET, p.y + CURSOR_INSET, p.z ? BLACK : WHITE);
+            arduino->screen.fillTriangle(p.x, p.y, p.x + CURSOR_LENGTH, p.y + CURSOR_ANGLE, p.x + CURSOR_INSET, p.y + CURSOR_INSET, p.z ? BLACK : WHITE);
 
             prev_point = p;
         }

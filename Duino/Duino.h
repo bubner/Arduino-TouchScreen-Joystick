@@ -15,7 +15,12 @@ public:
     // a point follows the Adafruit GFX graphics library coordinate system, where +x is right, +y is down, (0,0) is in the top left.
     int x, y, z;
     bool invalid;
-    Point(int x = 0, int y = 0, int z = 0, bool invalid = true);
+    /**
+     * whether this point is the result of a default constructor and the values held should not be respected
+     */
+    bool uninitialised;
+    Point(int x, int y, int z = 0, bool invalid = true);
+    Point();
     bool operator==(const Point &other);
     void operator+=(const Point &other);
     /**
@@ -79,6 +84,12 @@ public:
      * shorthand for `arduino->screen.fillScreen(rgb(0, 0, 0));`
      */
     void reset_screen();
+    /**
+     * sets a new accumulation origin. no-ops in any other mode than `JOYSTICK_ACCUMULATING`
+     */
+    void set_joystick_accumulation_origin(int x, int y);
+private:
+    int acc_x = 0, acc_y = 0; // only used for JOYSTICK_ACCUMULATING
 };
 
 /**
