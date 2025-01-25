@@ -12,15 +12,12 @@
 class Point
 {
 public:
-    // a point follows the Adafruit GFX graphics library coordinate system, where +x is right, +y is down, (0,0) is in the top left.
+    // a point follows the Adafruit GFX graphics library coordinate system, where +x is right, +y is down, (0,0) is in the top left. z is used for touch/button pressure.
     int x, y, z;
+    // whether this point has elected to be invalid (such as a point returned that isn't registered as an active movement)
     bool invalid;
-    /**
-     * whether this point is the result of a default constructor and the values held should not be respected
-     */
-    bool uninitialised;
-    Point(int x, int y, int z = 0, bool invalid = true);
-    Point();
+    Point(int x, int y, int z, bool invalid) : x(x), y(y), z(z), invalid(invalid) {}
+    Point(int x, int y) : x(x), y(y), z(0), invalid(true) {}
     bool operator==(const Point &other);
     void operator+=(const Point &other);
     /**

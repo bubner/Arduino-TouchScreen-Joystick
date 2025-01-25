@@ -22,7 +22,7 @@ Point Arduino::getPoint()
     switch (pointMode)
     {
     case NO_INPUT:
-        return Point(); // invalid by default
+        return Point(0, 0); // invalid by default
     case TOUCH_SCREEN:
     {
         TSPoint p = touch.getPoint();
@@ -81,21 +81,6 @@ void Arduino::set_joystick_accumulation_origin(int x, int y)
     acc_y = y;
 }
 
-Point::Point(int x, int y, int z, bool invalid)
-{
-    this->x = x;
-    this->y = y;
-    this->z = z;
-    this->invalid = invalid;
-    this->uninitialised = false;
-}
-
-Point::Point()
-{
-    this->invalid = true;
-    this->uninitialised = true;
-}
-
 bool Point::operator==(const Point &other)
 {
     return near(x, other.x, POINT_EQUALITY_TOLERANCE_PX) && near(y, other.y, POINT_EQUALITY_TOLERANCE_PX) && z == other.z && invalid == other.invalid;
@@ -107,7 +92,6 @@ void Point::operator+=(const Point &other)
     this->y += other.y;
     this->z = other.z; // z axis does not need to be added
     this->invalid = other.invalid;
-    this->uninitialised = false;
 }
 
 void Point::print()
