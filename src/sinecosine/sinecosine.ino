@@ -13,12 +13,19 @@ void setup()
     DF_UY = 1;
 }
 
+double f(double x)
+{
+    return sin(x + millis() / 1E9);
+}
+
+double g(double x)
+{
+    return cos(x + millis() / 1E9);
+}
+
 void loop()
 {
-    long ms = millis();
-    arduino->draw_function([&ms](double x) -> double
-                           { return sin(x + ms / 1E9); }, RED);
-    arduino->draw_function([&ms](double x) -> double
-                           { return cos(x + ms / 1E9); }, CYAN);
+    arduino->draw_function(f, RED);
+    arduino->draw_function(g, CYAN);
     arduino->reset_screen();
 }

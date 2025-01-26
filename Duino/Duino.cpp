@@ -2,9 +2,6 @@
 #include <TouchScreen.h>
 #include "Duino.h"
 
-/**
- * start arduino using the selected point recognition mode using config.h constants
- */
 Arduino::Arduino(PointMode pointMode)
     : screen(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET),
       touch(TS_XP, TS_YP, TS_XM, TS_YM, TS_RX)
@@ -67,6 +64,26 @@ Point Arduino::getPoint()
         // will be rounded by the int narrowing, hence we need to store the accumulated floats here
         return Point(acc_x, acc_y, b, near(r_x, 0, JS_ACCUM_DEADBAND) && near(r_y, 0, JS_ACCUM_DEADBAND)); // invalid if no delta
     }
+    }
+}
+
+void Arduino::draw_function(unary_function func, uint16_t color, int lower_x, int upper_x, int lower_y, int upper_y, float delta_step)
+{
+    // map by double to preserve decimal accuracy of the function, the only narrowing should occur at the screen
+    // the built in function map() only applies to longs which removes all decimals via narrowing
+    double last_x = map_double(lower_x, lower_x, upper_x, 0, screen.width());
+    double last_y = map_double(func(lower_x), lower_y, upper_y, screen.height(), 0);
+    for (double t = lower_x + delta_step; t <= upper_x; t += delta_step)
+    {
+        double x = map_double(t, lower_x, upper_x, 0, screen.width());
+        double y = map_double(func(t), lower_y, upper_y, screen.height(), 0);
+        // don't bother rendering what we can't see or will overflow from narrowing
+        if (x >= 0 && x < screen.width() && y >= 0 && y < screen.height())
+        {
+            screen.drawLine(last_x, last_y, x, y, color);
+        }
+        last_x = x;
+        last_y = y;
     }
 }
 
